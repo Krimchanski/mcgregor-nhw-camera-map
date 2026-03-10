@@ -233,38 +233,133 @@
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            /* Hide search panel on mobile */
             .search-panel {
-                max-width: calc(100vw - 20px);
-                left: 10px;
-                right: 10px;
-                top: 10px;
+                display: none;
             }
+            
+            /* Hide default incident panel on mobile */
             .incident-panel {
+                display: none;
+            }
+            
+            /* Hide desktop legend on mobile */
+            .legend {
+                display: none;
+            }
+            
+            /* Floating Action Button for Incident Tools */
+            .mobile-fab {
+                display: block;
                 position: fixed;
-                bottom: 10px;
-                top: auto;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-                max-height: 50vh;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: #E63946;
+                color: white;
+                border: none;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                font-size: 28px;
+                cursor: pointer;
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.2s;
+            }
+            .mobile-fab:active {
+                transform: scale(0.95);
+            }
+            
+            /* Legend Toggle Button */
+            .mobile-legend-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                padding: 12px 16px;
+                background: white;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                z-index: 1000;
+            }
+            
+            /* Mobile Legend Panel (Collapsible) */
+            .mobile-legend-panel {
+                display: none;
+                position: fixed;
+                top: 70px;
+                left: 20px;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                max-width: 200px;
+            }
+            .mobile-legend-panel.active {
+                display: block;
+            }
+            .mobile-legend-panel h4 {
+                margin: 0 0 10px 0;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            
+            /* Bottom Sheet for Incident Tools */
+            .mobile-bottom-sheet {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+                z-index: 999;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-out;
+                max-height: 70vh;
                 overflow-y: auto;
             }
-            .legend {
-                font-size: 12px;
-                position: fixed !important;
-                bottom: auto !important;
-                top: 120px !important;
-                left: 10px !important;
-                max-width: 150px;
-                z-index: 999;
+            .mobile-bottom-sheet.active {
+                transform: translateY(0);
             }
-            .legend-color {
-                width: 20px;
-                height: 20px;
+            .bottom-sheet-handle {
+                width: 40px;
+                height: 4px;
+                background: #ccc;
+                border-radius: 2px;
+                margin: 12px auto 8px;
             }
-            /* Add padding to map container on mobile to prevent overlap */
-            #map {
-                padding-top: 0;
+            .bottom-sheet-content {
+                padding: 10px 20px 30px;
+            }
+            
+            /* Stats box in bottom sheet */
+            .mobile-bottom-sheet .stats-box {
+                margin-bottom: 15px;
+            }
+            
+            /* Camera popup adjustments */
+            .leaflet-popup {
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Hide mobile-only elements on desktop */
+        @media (min-width: 769px) {
+            .mobile-fab,
+            .mobile-legend-toggle,
+            .mobile-legend-panel,
+            .mobile-bottom-sheet {
+                display: none !important;
             }
         }
         
@@ -290,12 +385,15 @@
 </head>
 <body>
     <div id="map"></div>
+    
+    <!-- Desktop Search Panel -->
     <div class="search-panel">
         <h4>🔍 Search Cameras</h4>
         <input type="text" id="searchInput" class="search-input" placeholder="Search camera name, address, or contact...">
         <button class="clear-search" id="clearSearch">Clear Search</button>
     </div>
     
+    <!-- Desktop Incident Panel -->
     <div class="incident-panel">
         <div class="stats-box">
             <strong>Loading...</strong>
@@ -314,6 +412,47 @@
             </button>
         </div>
         <div id="nearbyCameras"></div>
+    </div>
+
+    <!-- Mobile-Only Elements -->
+    <!-- Legend Toggle Button -->
+    <button class="mobile-legend-toggle" id="mobileLegendToggle">
+        🗺️ Legend
+    </button>
+    
+    <!-- Collapsible Legend Panel -->
+    <div class="mobile-legend-panel" id="mobileLegendPanel">
+        <h4>Legend</h4>
+        <div id="mobileLegendContent"></div>
+    </div>
+    
+    <!-- Floating Action Button -->
+    <button class="mobile-fab" id="mobileFab">
+        📍
+    </button>
+    
+    <!-- Bottom Sheet -->
+    <div class="mobile-bottom-sheet" id="mobileBottomSheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-content">
+            <div class="stats-box">
+                <strong>Loading...</strong>
+            </div>
+            <h4>📍 Incident Tools</h4>
+            <button class="tool-btn" id="mobileMarkIncidentBtn">
+                <span>📌</span> Mark Incident Location
+            </button>
+            <div id="mobileIncidentControls" style="display: none;">
+                <div class="radius-control">
+                    <label>Search Radius: <span class="radius-value" id="mobileRadiusValue">100m</span></label>
+                    <input type="range" class="radius-slider" id="mobileRadiusSlider" min="50" max="500" value="100" step="10">
+                </div>
+                <button class="tool-btn" id="mobileClearIncidentBtn" style="background: #6C757D; color: white; margin-top: 10px;">
+                    <span>✕</span> Clear Incident Marker
+                </button>
+            </div>
+            <div id="mobileNearbyCameras"></div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -395,6 +534,10 @@
                 }
 
                 document.querySelector('.stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
+                
+                // Update mobile stats box too
+                document.querySelector('.mobile-bottom-sheet .stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
+                
                 initializeMap();
             },
             error: function(error) {
@@ -464,9 +607,22 @@
             };
             legend.addTo(map);
             
+            // Populate mobile legend
+            const mobileLegendContent = document.getElementById('mobileLegendContent');
+            const types = [...new Set(cameras.map(c => c.type))].sort();
+            types.forEach(type => {
+                mobileLegendContent.innerHTML += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${getColor(type)};"></div>
+                        <span>${type}</span>
+                    </div>
+                `;
+            });
+            
             // Initialize search and incident tools after markers are loaded
             setupSearchFunctionality();
             setupIncidentTools();
+            setupMobileUI();
         }
 
         // ===== SEARCH FUNCTIONALITY =====
@@ -680,6 +836,207 @@
             }
         }
 
+        // ===== MOBILE UI SETUP =====
+        function setupMobileUI() {
+            // Legend toggle
+            const legendToggle = document.getElementById('mobileLegendToggle');
+            const legendPanel = document.getElementById('mobileLegendPanel');
+            
+            legendToggle.addEventListener('click', () => {
+                legendPanel.classList.toggle('active');
+            });
+            
+            // Close legend when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!legendToggle.contains(e.target) && !legendPanel.contains(e.target)) {
+                    legendPanel.classList.remove('active');
+                }
+            });
+            
+            // FAB and Bottom Sheet
+            const fab = document.getElementById('mobileFab');
+            const bottomSheet = document.getElementById('mobileBottomSheet');
+            
+            fab.addEventListener('click', () => {
+                bottomSheet.classList.toggle('active');
+                if (bottomSheet.classList.contains('active')) {
+                    fab.style.display = 'none';
+                }
+            });
+            
+            // Close bottom sheet when swiping down on handle
+            const handle = document.querySelector('.bottom-sheet-handle');
+            let startY = 0;
+            
+            handle.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+            });
+            
+            handle.addEventListener('touchend', (e) => {
+                const endY = e.changedTouches[0].clientY;
+                if (endY - startY > 50) { // Swipe down
+                    bottomSheet.classList.remove('active');
+                    fab.style.display = 'flex';
+                }
+            });
+            
+            // Mobile incident tools (mirror desktop functionality)
+            const mobileMarkBtn = document.getElementById('mobileMarkIncidentBtn');
+            const mobileClearBtn = document.getElementById('mobileClearIncidentBtn');
+            const mobileControls = document.getElementById('mobileIncidentControls');
+            const mobileRadiusSlider = document.getElementById('mobileRadiusSlider');
+            const mobileRadiusValue = document.getElementById('mobileRadiusValue');
+            const mobileNearbyCameras = document.getElementById('mobileNearbyCameras');
+            
+            let mobileIncidentMarker = null;
+            let mobileIncidentCircle = null;
+            let mobileIncidentMode = false;
+            
+            mobileRadiusSlider.addEventListener('input', (e) => {
+                mobileRadiusValue.textContent = e.target.value + 'm';
+                if (mobileIncidentCircle) {
+                    mobileIncidentCircle.setRadius(parseInt(e.target.value));
+                    findMobileNearbyCameras();
+                }
+            });
+            
+            mobileMarkBtn.addEventListener('click', () => {
+                if (mobileIncidentMarker) {
+                    mobileIncidentMode = true;
+                    mobileMarkBtn.classList.add('active');
+                    mobileMarkBtn.innerHTML = '<span>📍</span> Click Map to Reposition';
+                    map.getContainer().style.cursor = 'crosshair';
+                    bottomSheet.classList.remove('active');
+                } else {
+                    mobileIncidentMode = true;
+                    mobileMarkBtn.classList.add('active');
+                    mobileMarkBtn.innerHTML = '<span>📍</span> Click Map to Mark Location';
+                    map.getContainer().style.cursor = 'crosshair';
+                    bottomSheet.classList.remove('active');
+                }
+            });
+            
+            mobileClearBtn.addEventListener('click', () => {
+                clearMobileIncident();
+                mobileIncidentMode = false;
+                mobileMarkBtn.classList.remove('active');
+                mobileMarkBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+                map.getContainer().style.cursor = '';
+            });
+            
+            map.on('click', (e) => {
+                if (mobileIncidentMode) {
+                    placeMobileIncidentMarker(e.latlng);
+                }
+            });
+            
+            function placeMobileIncidentMarker(latlng) {
+                if (mobileIncidentMarker) {
+                    map.removeLayer(mobileIncidentMarker);
+                }
+                if (mobileIncidentCircle) {
+                    map.removeLayer(mobileIncidentCircle);
+                }
+                
+                const incidentIcon = L.divIcon({
+                    className: 'incident-marker-icon',
+                    html: '<div class="incident-marker"></div>',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+                
+                mobileIncidentMarker = L.marker(latlng, {icon: incidentIcon, draggable: true})
+                    .addTo(map)
+                    .bindPopup('<strong>📍 Incident Location</strong><br><small>Drag to reposition</small>');
+                
+                mobileIncidentMarker.on('dragend', () => {
+                    findMobileNearbyCameras();
+                });
+                
+                const radius = parseInt(mobileRadiusSlider.value);
+                mobileIncidentCircle = L.circle(latlng, {
+                    radius: radius,
+                    color: '#E63946',
+                    fillColor: '#E63946',
+                    fillOpacity: 0.08,
+                    weight: 2,
+                    dashArray: '8, 4'
+                }).addTo(map);
+                
+                mobileControls.style.display = 'block';
+                findMobileNearbyCameras();
+                bottomSheet.classList.add('active');
+                
+                mobileIncidentMode = false;
+                mobileMarkBtn.classList.remove('active');
+                mobileMarkBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+                map.getContainer().style.cursor = '';
+            }
+            
+            function clearMobileIncident() {
+                if (mobileIncidentMarker) {
+                    map.removeLayer(mobileIncidentMarker);
+                    mobileIncidentMarker = null;
+                }
+                if (mobileIncidentCircle) {
+                    map.removeLayer(mobileIncidentCircle);
+                    mobileIncidentCircle = null;
+                }
+                mobileControls.style.display = 'none';
+                mobileNearbyCameras.innerHTML = '';
+            }
+            
+            function findMobileNearbyCameras() {
+                if (!mobileIncidentMarker) return;
+                
+                const incidentLatLng = mobileIncidentMarker.getLatLng();
+                const radius = parseInt(mobileRadiusSlider.value);
+                
+                const nearby = [];
+                allMarkers.forEach(marker => {
+                    const distance = incidentLatLng.distanceTo(marker.getLatLng());
+                    if (distance <= radius) {
+                        nearby.push({
+                            marker: marker,
+                            camera: marker.cameraData,
+                            distance: Math.round(distance)
+                        });
+                    }
+                });
+                
+                nearby.sort((a, b) => a.distance - b.distance);
+                
+                if (nearby.length === 0) {
+                    mobileNearbyCameras.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">No cameras in range</div>';
+                } else {
+                    let html = `<div class="nearby-cameras">
+                        <h5>📷 ${nearby.length} Nearby Camera${nearby.length > 1 ? 's' : ''}</h5>`;
+                    
+                    nearby.forEach(item => {
+                        const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                        const contactName = contactParts[0].trim();
+                        const contactNumber = contactParts[1] || '';
+                        
+                        html += `
+                            <div class="nearby-camera-item" onclick="highlightCamera(${allMarkers.indexOf(item.marker)})">
+                                <strong>${item.camera.name}</strong><br>
+                                <small>${item.distance}m away • ${item.camera.type}</small><br>
+                                <small>${contactName} ${contactNumber}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `<button class="copy-list-btn" onclick="copyMobileNearbyList()">📋 Copy List to Clipboard</button>`;
+                    html += '</div>';
+                    mobileNearbyCameras.innerHTML = html;
+                }
+                
+                window.mobileNearbyCameras = nearby;
+                window.mobileIncidentMarker = mobileIncidentMarker;
+                window.mobileRadiusSlider = mobileRadiusSlider;
+            }
+        }
+
         // Make functions globally accessible
         window.highlightCamera = function(index) {
             const marker = allMarkers[index];
@@ -721,6 +1078,37 @@
                 setTimeout(() => {
                     btn.textContent = originalText;
                 }, 2000);
+            });
+        };
+        
+        window.copyMobileNearbyList = function() {
+            if (!window.mobileNearbyCameras || window.mobileNearbyCameras.length === 0) return;
+            
+            let text = `NEARBY CAMERAS (${window.mobileNearbyCameras.length})\n`;
+            text += `Incident Location: ${window.mobileIncidentMarker.getLatLng().lat.toFixed(6)}, ${window.mobileIncidentMarker.getLatLng().lng.toFixed(6)}\n`;
+            text += `Search Radius: ${window.mobileRadiusSlider.value}m\n\n`;
+            
+            window.mobileNearbyCameras.forEach((item, i) => {
+                const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                const contactName = contactParts[0].trim();
+                const contactNumber = contactParts[1] || '';
+                
+                text += `${i + 1}. ${item.camera.name}\n`;
+                text += `   Distance: ${item.distance}m\n`;
+                text += `   Type: ${item.camera.type}\n`;
+                text += `   Address: ${item.camera.address}\n`;
+                text += `   Contact: ${contactName} ${contactNumber}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('#mobileNearbyCameras .copy-list-btn');
+                if (btn) {
+                    const originalText = btn.textContent;
+                    btn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 2000);
+                }
             });
         };
     </script>
