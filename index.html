@@ -285,7 +285,7 @@
     
     <div class="incident-panel">
         <div class="stats-box">
-            <strong>33</strong> Total Cameras
+            <strong>Loading...</strong>
         </div>
         <h4>📍 Incident Tools</h4>
         <button class="tool-btn" id="markIncidentBtn">
@@ -331,81 +331,25 @@
             return cameraColors[type] || cameraColors["Unknown"];
         }
 
-       // Google Sheets CSV URL - now works because we're hosted online!
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSl5z5BaG9hDekhoMFgsXVOclCoGLaSYXpOkxfv_3x6c-HWOfhxfLYm43PcqEyD_8Qyg2uL0buOQ6Je/pub?gid=0&single=true&output=csv';
-
-// Store all markers and cameras
-let allMarkers = [];
-let cameras = [];
-
-// Load and parse CSV data from Google Sheets
-console.log('Loading camera data from Google Sheets...');
-
-Papa.parse(https://docs.google.com/spreadsheets/d/1kdEO1bvojAnIhgrs4ewYmjH-qfnuP8capkHRmQT9gr0/edit?usp=sharing, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-        console.log('CSV loaded successfully:', results);
-        
-        if (!results.data || results.data.length === 0) {
-            alert('No camera data found in spreadsheet.');
-            return;
-        }
-        
-        // Process CSV data - filter rows with valid coordinates
-        cameras = results.data
-            .filter(row => {
-                if (!row.Latitude || !row.Longitude) return false;
-                const lat = row.Latitude.toString().trim();
-                const lng = row.Longitude.toString().trim();
-                if (lat === '' || lng === '') return false;
-                const latNum = parseFloat(lat);
-                const lngNum = parseFloat(lng);
-                return !isNaN(latNum) && !isNaN(lngNum);
-            })
-            .map(row => ({
-                name: row['Camera Title'] || 'Unnamed Camera',
-                lat: parseFloat(row.Latitude),
-                lng: parseFloat(row.Longitude),
-                type: row.Type ? row.Type.trim() : 'Unknown',
-                address: row['Installation Address'] || row['Camera Location'] || '',
-                contact: row['Contact Person & #'] || '',
-                phase: row.Phase || ''
-            }));
-
-        console.log(`Loaded ${cameras.length} cameras`);
-        
-        if (cameras.length === 0) {
-            alert('No cameras with valid coordinates found.');
-            return;
-        }
-
-        document.querySelector('.stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
-        initializeMap();
-    },
-    error: function(error) {
-        console.error('Error loading data:', error);
-        alert('Error loading camera data from Google Sheets.');
-    }
-});
+        // Google Sheets CSV URL
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSl5z5BaG9hDekhoMFgsXVOclCoGLaSYXpOkxfv_3x6c-HWOfhxfLYm43PcqEyD_8Qyg2uL0buOQ6Je/pub?gid=0&single=true&output=csv';
 
         // Store all markers and cameras
         let allMarkers = [];
         let cameras = [];
 
-        // Parse the embedded CSV data
-        console.log('Loading camera data from embedded CSV...');
-        
-        Papa.parse(EMBEDDED_CSV, {
+        // Load and parse CSV data from Google Sheets
+        console.log('Loading camera data from Google Sheets...');
+
+        Papa.parse(SHEET_URL, {
+            download: true,
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
-                console.log('CSV Parse Results:', results);
+                console.log('CSV loaded successfully:', results);
                 
                 if (!results.data || results.data.length === 0) {
-                    console.error('No data in embedded CSV');
-                    alert('No camera data found. Please contact the administrator.');
+                    alert('No camera data found in spreadsheet.');
                     return;
                 }
                 
@@ -413,15 +357,11 @@ Papa.parse(https://docs.google.com/spreadsheets/d/1kdEO1bvojAnIhgrs4ewYmjH-qfnuP
                 cameras = results.data
                     .filter(row => {
                         if (!row.Latitude || !row.Longitude) return false;
-                        
                         const lat = row.Latitude.toString().trim();
                         const lng = row.Longitude.toString().trim();
-                        
                         if (lat === '' || lng === '') return false;
-                        
                         const latNum = parseFloat(lat);
                         const lngNum = parseFloat(lng);
-                        
                         return !isNaN(latNum) && !isNaN(lngNum);
                     })
                     .map(row => ({
@@ -434,22 +374,19 @@ Papa.parse(https://docs.google.com/spreadsheets/d/1kdEO1bvojAnIhgrs4ewYmjH-qfnuP
                         phase: row.Phase || ''
                     }));
 
-                console.log(`Processed ${cameras.length} cameras with valid coordinates`);
+                console.log(`Loaded ${cameras.length} cameras`);
                 
                 if (cameras.length === 0) {
                     alert('No cameras with valid coordinates found.');
                     return;
                 }
 
-                // Update camera count
                 document.querySelector('.stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
-
-                // Initialize map with cameras
                 initializeMap();
             },
             error: function(error) {
-                console.error('PapaParse Error:', error);
-                alert('Error parsing camera data: ' + error.message);
+                console.error('Error loading data:', error);
+                alert('Error loading camera data from Google Sheets.');
             }
         });
 
@@ -521,214 +458,214 @@ Papa.parse(https://docs.google.com/spreadsheets/d/1kdEO1bvojAnIhgrs4ewYmjH-qfnuP
 
         // ===== SEARCH FUNCTIONALITY =====
         function setupSearchFunctionality() {
-        const searchInput = document.getElementById('searchInput');
-        const clearSearch = document.getElementById('clearSearch');
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
 
-        function applySearch() {
-            const searchTerm = searchInput.value.toLowerCase();
+            function applySearch() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                allMarkers.forEach(marker => {
+                    const camera = marker.cameraData;
+                    let show = true;
+
+                    // Apply search filter
+                    if (searchTerm) {
+                        const searchableText = `
+                            ${camera.name} 
+                            ${camera.address} 
+                            ${camera.contact} 
+                            ${camera.type}
+                        `.toLowerCase();
+                        
+                        if (!searchableText.includes(searchTerm)) {
+                            show = false;
+                        }
+                    }
+
+                    // Show or hide marker
+                    if (show) {
+                        if (!map.hasLayer(marker)) {
+                            marker.addTo(map);
+                        }
+                    } else {
+                        map.removeLayer(marker);
+                    }
+                });
+            }
+
+            searchInput.addEventListener('input', applySearch);
             
-            allMarkers.forEach(marker => {
-                const camera = marker.cameraData;
-                let show = true;
-
-                // Apply search filter
-                if (searchTerm) {
-                    const searchableText = `
-                        ${camera.name} 
-                        ${camera.address} 
-                        ${camera.contact} 
-                        ${camera.type}
-                    `.toLowerCase();
-                    
-                    if (!searchableText.includes(searchTerm)) {
-                        show = false;
-                    }
-                }
-
-                // Show or hide marker
-                if (show) {
-                    if (!map.hasLayer(marker)) {
-                        marker.addTo(map);
-                    }
-                } else {
-                    map.removeLayer(marker);
-                }
+            clearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                applySearch();
             });
-        }
-
-        searchInput.addEventListener('input', applySearch);
-        
-        clearSearch.addEventListener('click', () => {
-            searchInput.value = '';
-            applySearch();
-        });
         }
 
         // ===== INCIDENT RESPONSE FUNCTIONALITY =====
         function setupIncidentTools() {
-        const markIncidentBtn = document.getElementById('markIncidentBtn');
-        const clearIncidentBtn = document.getElementById('clearIncidentBtn');
-        const incidentControls = document.getElementById('incidentControls');
-        const radiusSlider = document.getElementById('radiusSlider');
-        const radiusValue = document.getElementById('radiusValue');
-        const nearbyCamerasDiv = document.getElementById('nearbyCameras');
-        
-        let incidentMarker = null;
-        let incidentCircle = null;
-        let incidentMode = false;
-
-        radiusSlider.addEventListener('input', (e) => {
-            radiusValue.textContent = e.target.value + 'm';
-            if (incidentCircle) {
-                incidentCircle.setRadius(parseInt(e.target.value));
-                findNearbyCameras();
-            }
-        });
-
-        markIncidentBtn.addEventListener('click', () => {
-            if (incidentMarker) {
-                // If incident already placed, allow repositioning
-                incidentMode = true;
-                markIncidentBtn.classList.add('active');
-                markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Reposition';
-                map.getContainer().style.cursor = 'crosshair';
-            } else {
-                // Start incident mode
-                incidentMode = true;
-                markIncidentBtn.classList.add('active');
-                markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Mark Location';
-                map.getContainer().style.cursor = 'crosshair';
-            }
-        });
-
-        clearIncidentBtn.addEventListener('click', () => {
-            clearIncident();
-            incidentMode = false;
-            markIncidentBtn.classList.remove('active');
-            markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
-            map.getContainer().style.cursor = '';
-        });
-
-        map.on('click', (e) => {
-            if (incidentMode) {
-                placeIncidentMarker(e.latlng);
-            }
-        });
-
-        function placeIncidentMarker(latlng) {
-            // Remove existing incident marker and circle
-            if (incidentMarker) {
-                map.removeLayer(incidentMarker);
-            }
-            if (incidentCircle) {
-                map.removeLayer(incidentCircle);
-            }
-
-            // Create incident marker with cleaner design
-            const incidentIcon = L.divIcon({
-                className: 'incident-marker-icon',
-                html: '<div class="incident-marker"></div>',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
-            });
-
-            incidentMarker = L.marker(latlng, {icon: incidentIcon, draggable: true})
-                .addTo(map)
-                .bindPopup('<strong>📍 Incident Location</strong><br><small>Drag to reposition</small>');
-
-            // Enable dragging to reposition
-            incidentMarker.on('dragend', () => {
-                findNearbyCameras();
-            });
-
-            // Create radius circle
-            const radius = parseInt(radiusSlider.value);
-            incidentCircle = L.circle(latlng, {
-                radius: radius,
-                color: '#E63946',
-                fillColor: '#E63946',
-                fillOpacity: 0.08,
-                weight: 2,
-                dashArray: '8, 4'
-            }).addTo(map);
-
-            // Show controls
-            incidentControls.style.display = 'block';
-
-            // Find nearby cameras
-            findNearbyCameras();
-
-            // Exit incident mode
-            incidentMode = false;
-            markIncidentBtn.classList.remove('active');
-            markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
-            map.getContainer().style.cursor = '';
-        }
-
-        function clearIncident() {
-            if (incidentMarker) {
-                map.removeLayer(incidentMarker);
-                incidentMarker = null;
-            }
-            if (incidentCircle) {
-                map.removeLayer(incidentCircle);
-                incidentCircle = null;
-            }
-            incidentControls.style.display = 'none';
-            nearbyCamerasDiv.innerHTML = '';
-        }
-
-        function findNearbyCameras() {
-            if (!incidentMarker) return;
-
-            const incidentLatLng = incidentMarker.getLatLng();
-            const radius = parseInt(radiusSlider.value);
+            const markIncidentBtn = document.getElementById('markIncidentBtn');
+            const clearIncidentBtn = document.getElementById('clearIncidentBtn');
+            const incidentControls = document.getElementById('incidentControls');
+            const radiusSlider = document.getElementById('radiusSlider');
+            const radiusValue = document.getElementById('radiusValue');
+            const nearbyCamerasDiv = document.getElementById('nearbyCameras');
             
-            const nearby = [];
-            allMarkers.forEach(marker => {
-                const distance = incidentLatLng.distanceTo(marker.getLatLng());
-                if (distance <= radius) {
-                    nearby.push({
-                        marker: marker,
-                        camera: marker.cameraData,
-                        distance: Math.round(distance)
-                    });
+            let incidentMarker = null;
+            let incidentCircle = null;
+            let incidentMode = false;
+
+            radiusSlider.addEventListener('input', (e) => {
+                radiusValue.textContent = e.target.value + 'm';
+                if (incidentCircle) {
+                    incidentCircle.setRadius(parseInt(e.target.value));
+                    findNearbyCameras();
                 }
             });
 
-            // Sort by distance
-            nearby.sort((a, b) => a.distance - b.distance);
+            markIncidentBtn.addEventListener('click', () => {
+                if (incidentMarker) {
+                    // If incident already placed, allow repositioning
+                    incidentMode = true;
+                    markIncidentBtn.classList.add('active');
+                    markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Reposition';
+                    map.getContainer().style.cursor = 'crosshair';
+                } else {
+                    // Start incident mode
+                    incidentMode = true;
+                    markIncidentBtn.classList.add('active');
+                    markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Mark Location';
+                    map.getContainer().style.cursor = 'crosshair';
+                }
+            });
 
-            // Display nearby cameras
-            if (nearby.length === 0) {
-                nearbyCamerasDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">No cameras in range</div>';
-            } else {
-                let html = `<div class="nearby-cameras">
-                    <h5>📷 ${nearby.length} Nearby Camera${nearby.length > 1 ? 's' : ''}</h5>`;
-                
-                nearby.forEach(item => {
-                    const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
-                    const contactName = contactParts[0].trim();
-                    const contactNumber = contactParts[1] || '';
-                    
-                    html += `
-                        <div class="nearby-camera-item" onclick="highlightCamera(${allMarkers.indexOf(item.marker)})">
-                            <strong>${item.camera.name}</strong><br>
-                            <small>${item.distance}m away • ${item.camera.type}</small><br>
-                            <small>${contactName} ${contactNumber}</small>
-                        </div>
-                    `;
+            clearIncidentBtn.addEventListener('click', () => {
+                clearIncident();
+                incidentMode = false;
+                markIncidentBtn.classList.remove('active');
+                markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+                map.getContainer().style.cursor = '';
+            });
+
+            map.on('click', (e) => {
+                if (incidentMode) {
+                    placeIncidentMarker(e.latlng);
+                }
+            });
+
+            function placeIncidentMarker(latlng) {
+                // Remove existing incident marker and circle
+                if (incidentMarker) {
+                    map.removeLayer(incidentMarker);
+                }
+                if (incidentCircle) {
+                    map.removeLayer(incidentCircle);
+                }
+
+                // Create incident marker with cleaner design
+                const incidentIcon = L.divIcon({
+                    className: 'incident-marker-icon',
+                    html: '<div class="incident-marker"></div>',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
                 });
-                
-                html += `<button class="copy-list-btn" onclick="copyNearbyList()">📋 Copy List to Clipboard</button>`;
-                html += '</div>';
-                nearbyCamerasDiv.innerHTML = html;
+
+                incidentMarker = L.marker(latlng, {icon: incidentIcon, draggable: true})
+                    .addTo(map)
+                    .bindPopup('<strong>📍 Incident Location</strong><br><small>Drag to reposition</small>');
+
+                // Enable dragging to reposition
+                incidentMarker.on('dragend', () => {
+                    findNearbyCameras();
+                });
+
+                // Create radius circle
+                const radius = parseInt(radiusSlider.value);
+                incidentCircle = L.circle(latlng, {
+                    radius: radius,
+                    color: '#E63946',
+                    fillColor: '#E63946',
+                    fillOpacity: 0.08,
+                    weight: 2,
+                    dashArray: '8, 4'
+                }).addTo(map);
+
+                // Show controls
+                incidentControls.style.display = 'block';
+
+                // Find nearby cameras
+                findNearbyCameras();
+
+                // Exit incident mode
+                incidentMode = false;
+                markIncidentBtn.classList.remove('active');
+                markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+                map.getContainer().style.cursor = '';
             }
 
-            // Store nearby cameras for copying
-            window.nearbyCameras = nearby;
+            function clearIncident() {
+                if (incidentMarker) {
+                    map.removeLayer(incidentMarker);
+                    incidentMarker = null;
+                }
+                if (incidentCircle) {
+                    map.removeLayer(incidentCircle);
+                    incidentCircle = null;
+                }
+                incidentControls.style.display = 'none';
+                nearbyCamerasDiv.innerHTML = '';
+            }
+
+            function findNearbyCameras() {
+                if (!incidentMarker) return;
+
+                const incidentLatLng = incidentMarker.getLatLng();
+                const radius = parseInt(radiusSlider.value);
+                
+                const nearby = [];
+                allMarkers.forEach(marker => {
+                    const distance = incidentLatLng.distanceTo(marker.getLatLng());
+                    if (distance <= radius) {
+                        nearby.push({
+                            marker: marker,
+                            camera: marker.cameraData,
+                            distance: Math.round(distance)
+                        });
+                    }
+                });
+
+                // Sort by distance
+                nearby.sort((a, b) => a.distance - b.distance);
+
+                // Display nearby cameras
+                if (nearby.length === 0) {
+                    nearbyCamerasDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">No cameras in range</div>';
+                } else {
+                    let html = `<div class="nearby-cameras">
+                        <h5>📷 ${nearby.length} Nearby Camera${nearby.length > 1 ? 's' : ''}</h5>`;
+                    
+                    nearby.forEach(item => {
+                        const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                        const contactName = contactParts[0].trim();
+                        const contactNumber = contactParts[1] || '';
+                        
+                        html += `
+                            <div class="nearby-camera-item" onclick="highlightCamera(${allMarkers.indexOf(item.marker)})">
+                                <strong>${item.camera.name}</strong><br>
+                                <small>${item.distance}m away • ${item.camera.type}</small><br>
+                                <small>${contactName} ${contactNumber}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `<button class="copy-list-btn" onclick="copyNearbyList()">📋 Copy List to Clipboard</button>`;
+                    html += '</div>';
+                    nearbyCamerasDiv.innerHTML = html;
+                }
+
+                // Store nearby cameras for copying
+                window.nearbyCameras = nearby;
+            }
         }
-        } // End of setupIncidentTools function
 
         // Make functions globally accessible
         window.highlightCamera = function(index) {
