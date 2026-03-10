@@ -331,39 +331,64 @@
             return cameraColors[type] || cameraColors["Unknown"];
         }
 
-        // Embedded camera data - UPDATE THIS SECTION when your spreadsheet changes
-        // Copy-paste the CSV data between the backticks below
-        const EMBEDDED_CSV = `Phase,Camera Title,Committee member responsible,Installation Address,Camera Location,Latitude,Longitude,Contact Person & #,Type,
-1,60A Mill St,,60A Mill,"33°57'03.2""S 19°49'21.2""E",-33.950889,19.822556,Angus Buchanan 083 601 8869,Tapo,
-1,De Krans #2,LM,1B Church St,"33°56'46.4""S 19°49'27.2""E",-33.946222,19.824222,Hilary Henderson 082 868 6160,Tapo,
-1,Voortrekker Str between van Reenen & Bree,PH,74 Voortrekker St,"33°57'00.5""S 19°49'32.8""E",-33.950139,19.825778,Billy Kennedy 082 851 1825,Tapo,
-1,77 Buitekant,,77 Buitekant,"33°57'09.3""S 19°49'40.0""E",-33.952583,19.827778,Boudewijn Goossens 079 919 2999,Tapo,
-1,13 Mill St,JE,13 Mill St,"33°56'44.1""S 19°49'41.1""E",-33.945583,19.828083,Carl-Peter 078 970 0882,Tapo,
-2,Cnr Church & Mill St,JE,Cnr Church & Mill,"33°56'50.9""S 19°49'33.8""E",-33.947472,19.826056,Cobus Bronn 083 996 0374,Tapo,
-3,Cnr of Long & Bree,CC,26 Bree st,"33°57'02.5""S 19°49'38.7""E",-33.950694,19.827417,Linda Bassingthwaighte 071 439 9134,Tapo,
-1,39 Mill St,,39 Mill St,"33°56'59.0""S 19°49'25.1""E",-33.949722,19.823639,Rob Graham 078 411 1024,Tapo,
-1,Cnr Long & Plein St,,97 Long St,"33°57'11.6""S 19°49'29.1""E",-33.953222,19.824750,Fiona Adams 083 419 5105,Tapo,
-2,51 Voortrekker St,JE,51 Voortrekker St,"33°56'52.4""S 19°49'40.8""E",-33.947889,19.828000,Gerard & Philip 083 675 0403,Tapo,
-2,Cnr of Church & Long,AJ,Cnr of Church & Long,"33°56'58.2""S 19°49'43.4""E",-33.949500,19.828722,Rodney Sandwith 082 893 0110,Tapo,
-2,Cnr Voortrekker & Church,,Cnr Voortrekker & Church,"33°56'54.8""S 19°49'38.2""E",-33.948556,19.827278,John Oldham 083 258 6261,Tapo Solar,
-3,79 Voortrekker St,JE,79 Voortrekker St,"33°57'03.6""S 19°49'28.8""E",-33.951000,19.824667,Bill Doetenbach 060 810 1003,EZviz,
-,Cnr of Smith & Voortrekker,JE,Cnr of Smith & Voortrekker,"33°57'12.7""S 19°49'18.8""E",-33.953528,19.821889,Fiona Cameron Brown 082 924 8997,Tapo,
-,107 Voortrekker St,JE,107 Voortrekker St,"33°57'15.2""S 19°49'15.0""E",-33.954222,19.820833,Jeremy Nel 082 564 5473,Dahua,
-,Cnr of Grewe & Tindall,LM,16 Grewe,"33°56'44.7""S 19°49'35.1""E",-33.945750,19.826417,Patrick Fleckenstein 066 140 6664,Tapo,
-,Cnr of Mill & Tindall,JE,21 Mill St,,-33.946274,19.827320,Gordon Knight 082 787 8000,Tapo,
-,29 Mill St,,29 Mill St,,-33.948262,19.825208,Paula Davey 082 929 2275,Tapo,
-,Cnr of Darling & van Reenen,PH,5 van Reenen St,,-33.949080,19.822139,Kim Mitchell 082 493 7632,Tapo,
-,Cnr Bree & Mill,,46 Mill St,,-33.948787,19.824837,Richard Boome 083 235 3643,Tapo,
-,Cnr of Long & van Reenen,PH,91 Long St,,-33.952177,19.825813,Terry Holman 072 272 1000,Tapo,
-,1 van Reenen St,PH,1 van Reenen St,,-33.948629,19.821467,Benita Gouws 082 802 4843,Tapo,
-,41 Voortrekker St,JE,41 Voortrekker St,,-33.946714,19.829298,Corrie van der Colff 083 298 1128,Tapo,
-2, 40 Voortrekker St,LM, 40 Voortrekker St,,-33.946524,19.829642,Chandre Roux 081 238 6160,,
-1,Cnr of Plein & Long,AvD,Plein St,,-33.953484,19.824943,Brian Usher 082 571 7024,Tapo,Back Road Solar
-1,Cnr of Plein & Long,AvD,Plein St,,-33.953508,19.825023,Brian Usher 082 571 7024,Tapo,Back Road
-,26cVan Reenen St,PH,26c van Reenen St,,-33.952525,19.826896,BRS Wayne 082 830 7978,ProVision,
-,95 Long St,,95 Long St,,-33.952723,19.825232,Terry Holman 072 272 0999,Tapo,
-,101 Long St,,101 Long St,,-33.953902,19.823985,Tony Stipcich 082 491 0646,EZviz,
-,103 Long St,,103 Long St,,-33.953936,19.823973,Tony Stipcich 082 491 0647,EZviz,`;
+       // Google Sheets CSV URL - now works because we're hosted online!
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSl5z5BaG9hDekhoMFgsXVOclCoGLaSYXpOkxfv_3x6c-HWOfhxfLYm43PcqEyD_8Qyg2uL0buOQ6Je/pub?gid=0&single=true&output=csv';
+
+// Store all markers and cameras
+let allMarkers = [];
+let cameras = [];
+
+// Load and parse CSV data from Google Sheets
+console.log('Loading camera data from Google Sheets...');
+
+Papa.parse(https://docs.google.com/spreadsheets/d/1kdEO1bvojAnIhgrs4ewYmjH-qfnuP8capkHRmQT9gr0/edit?usp=sharing, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+        console.log('CSV loaded successfully:', results);
+        
+        if (!results.data || results.data.length === 0) {
+            alert('No camera data found in spreadsheet.');
+            return;
+        }
+        
+        // Process CSV data - filter rows with valid coordinates
+        cameras = results.data
+            .filter(row => {
+                if (!row.Latitude || !row.Longitude) return false;
+                const lat = row.Latitude.toString().trim();
+                const lng = row.Longitude.toString().trim();
+                if (lat === '' || lng === '') return false;
+                const latNum = parseFloat(lat);
+                const lngNum = parseFloat(lng);
+                return !isNaN(latNum) && !isNaN(lngNum);
+            })
+            .map(row => ({
+                name: row['Camera Title'] || 'Unnamed Camera',
+                lat: parseFloat(row.Latitude),
+                lng: parseFloat(row.Longitude),
+                type: row.Type ? row.Type.trim() : 'Unknown',
+                address: row['Installation Address'] || row['Camera Location'] || '',
+                contact: row['Contact Person & #'] || '',
+                phase: row.Phase || ''
+            }));
+
+        console.log(`Loaded ${cameras.length} cameras`);
+        
+        if (cameras.length === 0) {
+            alert('No cameras with valid coordinates found.');
+            return;
+        }
+
+        document.querySelector('.stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
+        initializeMap();
+    },
+    error: function(error) {
+        console.error('Error loading data:', error);
+        alert('Error loading camera data from Google Sheets.');
+    }
+});
 
         // Store all markers and cameras
         let allMarkers = [];
