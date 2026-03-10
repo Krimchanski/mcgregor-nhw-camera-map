@@ -237,6 +237,7 @@
                 max-width: calc(100vw - 20px);
                 left: 10px;
                 right: 10px;
+                top: 10px;
             }
             .incident-panel {
                 position: fixed;
@@ -245,13 +246,25 @@
                 right: 10px;
                 left: 10px;
                 max-width: none;
+                max-height: 50vh;
+                overflow-y: auto;
             }
             .legend {
                 font-size: 12px;
+                position: fixed !important;
+                bottom: auto !important;
+                top: 120px !important;
+                left: 10px !important;
+                max-width: 150px;
+                z-index: 999;
             }
             .legend-color {
                 width: 20px;
                 height: 20px;
+            }
+            /* Add padding to map container on mobile to prevent overlap */
+            #map {
+                padding-top: 0;
             }
         }
         
