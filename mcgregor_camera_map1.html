@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>McGregor NHW Camera Network Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        /* Search Panel */
+        .search-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+            width: calc(100vw - 40px);
+        }
+        .search-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #E63946;
+        }
+        .clear-search {
+            width: 100%;
+            padding: 8px;
+            background: #6C757D;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .clear-search:hover {
+            background: #5a6268;
+        }
+        
+        /* Incident Tools */
+        .incident-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 280px;
+        }
+        .incident-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .tool-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .tool-btn:hover {
+            background: #f0f0f0;
+        }
+        .tool-btn.active {
+            background: #E63946;
+            color: white;
+            border-color: #E63946;
+        }
+        .radius-control {
+            margin: 10px 0;
+        }
+        .radius-control label {
+            font-size: 12px;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .radius-slider {
+            width: 100%;
+        }
+        .radius-value {
+            font-weight: bold;
+            color: #E63946;
+        }
+        .nearby-cameras {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .nearby-cameras h5 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+        }
+        .nearby-camera-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .nearby-camera-item:hover {
+            background: white;
+        }
+        .nearby-camera-item:last-child {
+            border-bottom: none;
+        }
+        .copy-list-btn {
+            width: 100%;
+            padding: 8px;
+            background: #06D6A0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .copy-list-btn:hover {
+            background: #05b589;
+        }
+        
+        /* Legend */
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            line-height: 24px;
+        }
+        .legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .legend-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 3px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+        
+        /* Popup - Mobile Optimized */
+        .popup-content {
+            font-size: 15px;
+            min-width: 220px;
+        }
+        .popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .popup-content p {
+            margin: 6px 0;
+            line-height: 1.4;
+        }
+        .popup-content strong {
+            color: #555;
+        }
+        .directions-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #06AED5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .directions-btn:hover {
+            background: #0596bb;
+        }
+        
+        /* Stats Box */
+        .stats-box {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        .stats-box strong {
+            color: #E63946;
+            font-size: 18px;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .search-panel {
+                max-width: calc(100vw - 20px);
+                left: 10px;
+                right: 10px;
+            }
+            .incident-panel {
+                position: fixed;
+                bottom: 10px;
+                top: auto;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            .legend {
+                font-size: 12px;
+            }
+            .legend-color {
+                width: 20px;
+                height: 20px;
+            }
+        }
+        
+        /* Incident Marker - Clean static design */
+        .incident-marker {
+            background: #FF0000;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 8px rgba(255,0,0,0.6);
+        }
+        
+        /* Highlight marker */
+        .highlighted-marker {
+            animation: bounce 0.5s;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="search-panel">
+        <h4>🔍 Search Cameras</h4>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search camera name, address, or contact...">
+        <button class="clear-search" id="clearSearch">Clear Search</button>
+    </div>
+    
+    <div class="incident-panel">
+        <div class="stats-box">
+            <strong>33</strong> Total Cameras
+        </div>
+        <h4>📍 Incident Tools</h4>
+        <button class="tool-btn" id="markIncidentBtn">
+            <span>📌</span> Mark Incident Location
+        </button>
+        <div id="incidentControls" style="display: none;">
+            <div class="radius-control">
+                <label>Search Radius: <span class="radius-value" id="radiusValue">100m</span></label>
+                <input type="range" class="radius-slider" id="radiusSlider" min="50" max="500" value="100" step="10">
+            </div>
+            <button class="tool-btn" id="clearIncidentBtn" style="background: #6C757D; color: white; margin-top: 10px;">
+                <span>✕</span> Clear Incident Marker
+            </button>
+        </div>
+        <div id="nearbyCameras"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        // Color scheme for different camera types - high contrast colors
+        const cameraColors = {
+            "Tapo": "#E63946",        // Bright Red
+            "Tapo Solar": "#F77F00",  // Orange
+            "EZviz": "#06AED5",       // Bright Cyan
+            "Dahua": "#8338EC",       // Purple
+            "ProVision": "#06D6A0",   // Teal Green
+            "Eufy": "#FFB703",        // Golden Yellow
+            "Unknown": "#6C757D"      // Gray
+        };
+
+        // Initialize map centered on McGregor
+        const map = L.map('map').setView([-33.950, 19.826], 16);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Function to get color for camera type
+        function getColor(type) {
+            return cameraColors[type] || cameraColors["Unknown"];
+        }
+
+        // Embedded camera data - UPDATE THIS SECTION when your spreadsheet changes
+        // Copy-paste the CSV data between the backticks below
+        const EMBEDDED_CSV = `Phase,Camera Title,Committee member responsible,Installation Address,Camera Location,Latitude,Longitude,Contact Person & #,Type,
+1,60A Mill St,,60A Mill,"33°57'03.2""S 19°49'21.2""E",-33.950889,19.822556,Angus Buchanan 083 601 8869,Tapo,
+1,De Krans #2,LM,1B Church St,"33°56'46.4""S 19°49'27.2""E",-33.946222,19.824222,Hilary Henderson 082 868 6160,Tapo,
+1,Voortrekker Str between van Reenen & Bree,PH,74 Voortrekker St,"33°57'00.5""S 19°49'32.8""E",-33.950139,19.825778,Billy Kennedy 082 851 1825,Tapo,
+1,77 Buitekant,,77 Buitekant,"33°57'09.3""S 19°49'40.0""E",-33.952583,19.827778,Boudewijn Goossens 079 919 2999,Tapo,
+1,13 Mill St,JE,13 Mill St,"33°56'44.1""S 19°49'41.1""E",-33.945583,19.828083,Carl-Peter 078 970 0882,Tapo,
+2,Cnr Church & Mill St,JE,Cnr Church & Mill,"33°56'50.9""S 19°49'33.8""E",-33.947472,19.826056,Cobus Bronn 083 996 0374,Tapo,
+3,Cnr of Long & Bree,CC,26 Bree st,"33°57'02.5""S 19°49'38.7""E",-33.950694,19.827417,Linda Bassingthwaighte 071 439 9134,Tapo,
+1,39 Mill St,,39 Mill St,"33°56'59.0""S 19°49'25.1""E",-33.949722,19.823639,Rob Graham 078 411 1024,Tapo,
+1,Cnr Long & Plein St,,97 Long St,"33°57'11.6""S 19°49'29.1""E",-33.953222,19.824750,Fiona Adams 083 419 5105,Tapo,
+2,51 Voortrekker St,JE,51 Voortrekker St,"33°56'52.4""S 19°49'40.8""E",-33.947889,19.828000,Gerard & Philip 083 675 0403,Tapo,
+2,Cnr of Church & Long,AJ,Cnr of Church & Long,"33°56'58.2""S 19°49'43.4""E",-33.949500,19.828722,Rodney Sandwith 082 893 0110,Tapo,
+2,Cnr Voortrekker & Church,,Cnr Voortrekker & Church,"33°56'54.8""S 19°49'38.2""E",-33.948556,19.827278,John Oldham 083 258 6261,Tapo Solar,
+3,79 Voortrekker St,JE,79 Voortrekker St,"33°57'03.6""S 19°49'28.8""E",-33.951000,19.824667,Bill Doetenbach 060 810 1003,EZviz,
+,Cnr of Smith & Voortrekker,JE,Cnr of Smith & Voortrekker,"33°57'12.7""S 19°49'18.8""E",-33.953528,19.821889,Fiona Cameron Brown 082 924 8997,Tapo,
+,107 Voortrekker St,JE,107 Voortrekker St,"33°57'15.2""S 19°49'15.0""E",-33.954222,19.820833,Jeremy Nel 082 564 5473,Dahua,
+,Cnr of Grewe & Tindall,LM,16 Grewe,"33°56'44.7""S 19°49'35.1""E",-33.945750,19.826417,Patrick Fleckenstein 066 140 6664,Tapo,
+,Cnr of Mill & Tindall,JE,21 Mill St,,-33.946274,19.827320,Gordon Knight 082 787 8000,Tapo,
+,29 Mill St,,29 Mill St,,-33.948262,19.825208,Paula Davey 082 929 2275,Tapo,
+,Cnr of Darling & van Reenen,PH,5 van Reenen St,,-33.949080,19.822139,Kim Mitchell 082 493 7632,Tapo,
+,Cnr Bree & Mill,,46 Mill St,,-33.948787,19.824837,Richard Boome 083 235 3643,Tapo,
+,Cnr of Long & van Reenen,PH,91 Long St,,-33.952177,19.825813,Terry Holman 072 272 1000,Tapo,
+,1 van Reenen St,PH,1 van Reenen St,,-33.948629,19.821467,Benita Gouws 082 802 4843,Tapo,
+,41 Voortrekker St,JE,41 Voortrekker St,,-33.946714,19.829298,Corrie van der Colff 083 298 1128,Tapo,
+2, 40 Voortrekker St,LM, 40 Voortrekker St,,-33.946524,19.829642,Chandre Roux 081 238 6160,,
+1,Cnr of Plein & Long,AvD,Plein St,,-33.953484,19.824943,Brian Usher 082 571 7024,Tapo,Back Road Solar
+1,Cnr of Plein & Long,AvD,Plein St,,-33.953508,19.825023,Brian Usher 082 571 7024,Tapo,Back Road
+,26cVan Reenen St,PH,26c van Reenen St,,-33.952525,19.826896,BRS Wayne 082 830 7978,ProVision,
+,95 Long St,,95 Long St,,-33.952723,19.825232,Terry Holman 072 272 0999,Tapo,
+,101 Long St,,101 Long St,,-33.953902,19.823985,Tony Stipcich 082 491 0646,EZviz,
+,103 Long St,,103 Long St,,-33.953936,19.823973,Tony Stipcich 082 491 0647,EZviz,`;
+
+        // Store all markers and cameras
+        let allMarkers = [];
+        let cameras = [];
+
+        // Parse the embedded CSV data
+        console.log('Loading camera data from embedded CSV...');
+        
+        Papa.parse(EMBEDDED_CSV, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                console.log('CSV Parse Results:', results);
+                
+                if (!results.data || results.data.length === 0) {
+                    console.error('No data in embedded CSV');
+                    alert('No camera data found. Please contact the administrator.');
+                    return;
+                }
+                
+                // Process CSV data - filter rows with valid coordinates
+                cameras = results.data
+                    .filter(row => {
+                        if (!row.Latitude || !row.Longitude) return false;
+                        
+                        const lat = row.Latitude.toString().trim();
+                        const lng = row.Longitude.toString().trim();
+                        
+                        if (lat === '' || lng === '') return false;
+                        
+                        const latNum = parseFloat(lat);
+                        const lngNum = parseFloat(lng);
+                        
+                        return !isNaN(latNum) && !isNaN(lngNum);
+                    })
+                    .map(row => ({
+                        name: row['Camera Title'] || 'Unnamed Camera',
+                        lat: parseFloat(row.Latitude),
+                        lng: parseFloat(row.Longitude),
+                        type: row.Type ? row.Type.trim() : 'Unknown',
+                        address: row['Installation Address'] || row['Camera Location'] || '',
+                        contact: row['Contact Person & #'] || '',
+                        phase: row.Phase || ''
+                    }));
+
+                console.log(`Processed ${cameras.length} cameras with valid coordinates`);
+                
+                if (cameras.length === 0) {
+                    alert('No cameras with valid coordinates found.');
+                    return;
+                }
+
+                // Update camera count
+                document.querySelector('.stats-box').innerHTML = `<strong>${cameras.length}</strong> Total Cameras`;
+
+                // Initialize map with cameras
+                initializeMap();
+            },
+            error: function(error) {
+                console.error('PapaParse Error:', error);
+                alert('Error parsing camera data: ' + error.message);
+            }
+        });
+
+        function initializeMap() {
+            // Add markers for each camera
+            cameras.forEach(camera => {
+                const color = getColor(camera.type);
+                
+                // Create custom icon with larger size for mobile
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5);"></div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                // Split contact into name and number
+                const contactParts = camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                const contactName = contactParts[0].trim();
+                const contactNumber = contactParts[1] || '';
+                
+                // Create popup content
+                const popupContent = `
+                    <div class="popup-content">
+                        <h3>${camera.name}</h3>
+                        <p><strong>Type:</strong> ${camera.type}</p>
+                        <p><strong>Address:</strong> ${camera.address}</p>
+                        <p><strong>Contact Name:</strong> ${contactName}</p>
+                        ${contactNumber ? `<p><strong>Contact Number:</strong> <a href="tel:${contactNumber.replace(/\s/g, '')}">${contactNumber}</a></p>` : ''}
+                        <button class="directions-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${camera.lat},${camera.lng}', '_blank')">
+                            🧭 Get Directions
+                        </button>
+                    </div>
+                `;
+
+                // Add marker to map
+                const marker = L.marker([camera.lat, camera.lng], {icon: icon})
+                    .bindPopup(popupContent);
+                
+                marker.cameraData = camera;
+                marker.addTo(map);
+                allMarkers.push(marker);
+            });
+
+            // Add legend
+            const legend = L.control({position: 'bottomleft'});
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = '<h4>Legend</h4>';
+                
+                const types = [...new Set(cameras.map(c => c.type))].sort();
+                types.forEach(type => {
+                    div.innerHTML += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: ${getColor(type)};"></div>
+                            <span>${type}</span>
+                        </div>
+                    `;
+                });
+                
+                return div;
+            };
+            legend.addTo(map);
+            
+            // Initialize search and incident tools after markers are loaded
+            setupSearchFunctionality();
+            setupIncidentTools();
+        }
+
+        // ===== SEARCH FUNCTIONALITY =====
+        function setupSearchFunctionality() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearch = document.getElementById('clearSearch');
+
+        function applySearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            allMarkers.forEach(marker => {
+                const camera = marker.cameraData;
+                let show = true;
+
+                // Apply search filter
+                if (searchTerm) {
+                    const searchableText = `
+                        ${camera.name} 
+                        ${camera.address} 
+                        ${camera.contact} 
+                        ${camera.type}
+                    `.toLowerCase();
+                    
+                    if (!searchableText.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+
+                // Show or hide marker
+                if (show) {
+                    if (!map.hasLayer(marker)) {
+                        marker.addTo(map);
+                    }
+                } else {
+                    map.removeLayer(marker);
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', applySearch);
+        
+        clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            applySearch();
+        });
+        }
+
+        // ===== INCIDENT RESPONSE FUNCTIONALITY =====
+        function setupIncidentTools() {
+        const markIncidentBtn = document.getElementById('markIncidentBtn');
+        const clearIncidentBtn = document.getElementById('clearIncidentBtn');
+        const incidentControls = document.getElementById('incidentControls');
+        const radiusSlider = document.getElementById('radiusSlider');
+        const radiusValue = document.getElementById('radiusValue');
+        const nearbyCamerasDiv = document.getElementById('nearbyCameras');
+        
+        let incidentMarker = null;
+        let incidentCircle = null;
+        let incidentMode = false;
+
+        radiusSlider.addEventListener('input', (e) => {
+            radiusValue.textContent = e.target.value + 'm';
+            if (incidentCircle) {
+                incidentCircle.setRadius(parseInt(e.target.value));
+                findNearbyCameras();
+            }
+        });
+
+        markIncidentBtn.addEventListener('click', () => {
+            if (incidentMarker) {
+                // If incident already placed, allow repositioning
+                incidentMode = true;
+                markIncidentBtn.classList.add('active');
+                markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Reposition';
+                map.getContainer().style.cursor = 'crosshair';
+            } else {
+                // Start incident mode
+                incidentMode = true;
+                markIncidentBtn.classList.add('active');
+                markIncidentBtn.innerHTML = '<span>📍</span> Click Map to Mark Location';
+                map.getContainer().style.cursor = 'crosshair';
+            }
+        });
+
+        clearIncidentBtn.addEventListener('click', () => {
+            clearIncident();
+            incidentMode = false;
+            markIncidentBtn.classList.remove('active');
+            markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+            map.getContainer().style.cursor = '';
+        });
+
+        map.on('click', (e) => {
+            if (incidentMode) {
+                placeIncidentMarker(e.latlng);
+            }
+        });
+
+        function placeIncidentMarker(latlng) {
+            // Remove existing incident marker and circle
+            if (incidentMarker) {
+                map.removeLayer(incidentMarker);
+            }
+            if (incidentCircle) {
+                map.removeLayer(incidentCircle);
+            }
+
+            // Create incident marker with cleaner design
+            const incidentIcon = L.divIcon({
+                className: 'incident-marker-icon',
+                html: '<div class="incident-marker"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+
+            incidentMarker = L.marker(latlng, {icon: incidentIcon, draggable: true})
+                .addTo(map)
+                .bindPopup('<strong>📍 Incident Location</strong><br><small>Drag to reposition</small>');
+
+            // Enable dragging to reposition
+            incidentMarker.on('dragend', () => {
+                findNearbyCameras();
+            });
+
+            // Create radius circle
+            const radius = parseInt(radiusSlider.value);
+            incidentCircle = L.circle(latlng, {
+                radius: radius,
+                color: '#E63946',
+                fillColor: '#E63946',
+                fillOpacity: 0.08,
+                weight: 2,
+                dashArray: '8, 4'
+            }).addTo(map);
+
+            // Show controls
+            incidentControls.style.display = 'block';
+
+            // Find nearby cameras
+            findNearbyCameras();
+
+            // Exit incident mode
+            incidentMode = false;
+            markIncidentBtn.classList.remove('active');
+            markIncidentBtn.innerHTML = '<span>📌</span> Mark Incident Location';
+            map.getContainer().style.cursor = '';
+        }
+
+        function clearIncident() {
+            if (incidentMarker) {
+                map.removeLayer(incidentMarker);
+                incidentMarker = null;
+            }
+            if (incidentCircle) {
+                map.removeLayer(incidentCircle);
+                incidentCircle = null;
+            }
+            incidentControls.style.display = 'none';
+            nearbyCamerasDiv.innerHTML = '';
+        }
+
+        function findNearbyCameras() {
+            if (!incidentMarker) return;
+
+            const incidentLatLng = incidentMarker.getLatLng();
+            const radius = parseInt(radiusSlider.value);
+            
+            const nearby = [];
+            allMarkers.forEach(marker => {
+                const distance = incidentLatLng.distanceTo(marker.getLatLng());
+                if (distance <= radius) {
+                    nearby.push({
+                        marker: marker,
+                        camera: marker.cameraData,
+                        distance: Math.round(distance)
+                    });
+                }
+            });
+
+            // Sort by distance
+            nearby.sort((a, b) => a.distance - b.distance);
+
+            // Display nearby cameras
+            if (nearby.length === 0) {
+                nearbyCamerasDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">No cameras in range</div>';
+            } else {
+                let html = `<div class="nearby-cameras">
+                    <h5>📷 ${nearby.length} Nearby Camera${nearby.length > 1 ? 's' : ''}</h5>`;
+                
+                nearby.forEach(item => {
+                    const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                    const contactName = contactParts[0].trim();
+                    const contactNumber = contactParts[1] || '';
+                    
+                    html += `
+                        <div class="nearby-camera-item" onclick="highlightCamera(${allMarkers.indexOf(item.marker)})">
+                            <strong>${item.camera.name}</strong><br>
+                            <small>${item.distance}m away • ${item.camera.type}</small><br>
+                            <small>${contactName} ${contactNumber}</small>
+                        </div>
+                    `;
+                });
+                
+                html += `<button class="copy-list-btn" onclick="copyNearbyList()">📋 Copy List to Clipboard</button>`;
+                html += '</div>';
+                nearbyCamerasDiv.innerHTML = html;
+            }
+
+            // Store nearby cameras for copying
+            window.nearbyCameras = nearby;
+        }
+        } // End of setupIncidentTools function
+
+        // Make functions globally accessible
+        window.highlightCamera = function(index) {
+            const marker = allMarkers[index];
+            marker.openPopup();
+            
+            // Animate marker
+            const element = marker.getElement();
+            if (element) {
+                element.querySelector('div').classList.add('highlighted-marker');
+                setTimeout(() => {
+                    element.querySelector('div').classList.remove('highlighted-marker');
+                }, 500);
+            }
+        };
+
+        window.copyNearbyList = function() {
+            if (!window.nearbyCameras || window.nearbyCameras.length === 0) return;
+            
+            let text = `NEARBY CAMERAS (${window.nearbyCameras.length})\n`;
+            text += `Incident Location: ${incidentMarker.getLatLng().lat.toFixed(6)}, ${incidentMarker.getLatLng().lng.toFixed(6)}\n`;
+            text += `Search Radius: ${radiusSlider.value}m\n\n`;
+            
+            window.nearbyCameras.forEach((item, i) => {
+                const contactParts = item.camera.contact.split(/(\d{3}\s\d{3}\s\d{4})/);
+                const contactName = contactParts[0].trim();
+                const contactNumber = contactParts[1] || '';
+                
+                text += `${i + 1}. ${item.camera.name}\n`;
+                text += `   Distance: ${item.distance}m\n`;
+                text += `   Type: ${item.camera.type}\n`;
+                text += `   Address: ${item.camera.address}\n`;
+                text += `   Contact: ${contactName} ${contactNumber}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-list-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        };
+    </script>
+</body>
+</html>
